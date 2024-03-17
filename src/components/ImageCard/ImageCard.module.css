@@ -4,14 +4,15 @@
     margin: 0 auto;
     transition: .25s cubic-bezier(.4,0,.2,1);
     cursor: pointer;
-    /* max-width: 100%; */
     border-radius: 20px;
     display: block;
     height: 50vh;
     object-fit: cover;
+    width: 360px;
 }
 
 .galleryItem {
     margin-left: 20px;
     transition: transform .3s;
+    
 }

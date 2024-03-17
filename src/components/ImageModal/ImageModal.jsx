@@ -5,7 +5,7 @@ const ImageModal = ({ isOpen, image, onRequestClose }) => {
 
  
   return (
-    <Modal isOpen={isOpen} onRequestClose={onRequestClose}>
+    <Modal className={css.ReactModal__Content}  isOpen={isOpen} onRequestClose={onRequestClose}>
       <img className={css.imgRegular } src={image.urls.regular} alt={image.alt_description} />
       {/* <div>{image.author}</div>
       <div>{image.likes} likes</div>
