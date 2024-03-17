@@ -1,18 +1,21 @@
 import ImageCard from "../ImageCard/ImageCard";
-
+import css from "./ImageGallery.module.css"
 const ImageGallery = ({ images, openModal }) => {
   if (images.length === 0) {
     return null;
   }
 
   return (
-    <ul>
+    <ul className={css.gallery}>
       {images.map((image, index) => (
-        <ImageCard key={index} image={image} openModal={openModal} />
+        <li className={css.galleryItem} key={index}>
+          <ImageCard image={image} openModal={openModal} />
+        </li>
       ))}
     </ul>
   );
 };
+
 
 export default ImageGallery;
 

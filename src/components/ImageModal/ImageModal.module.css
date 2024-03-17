@@ -1,0 +1,6 @@
+.imgRegular {
+    max-width: 100%;
+    object-fit: cover;
+    border-radius: 20px;
+    max-height: calc(-24px + 100vh);
+}

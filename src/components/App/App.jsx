@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import axios from "axios";
 import Modal from "react-modal";
-
-Modal.setAppElement("#root");
 
 import ImageGallery from "../ImageGallery/ImageGallery";
 import LoadMoreBtn from "../LoadMoreBtn/LoadMoreBtn";
@@ -13,73 +11,102 @@ import css from "./App.module.css";
 import Loader from "../Loader/Loader";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 
+axios.defaults.baseURL = `https://api.unsplash.com/`;
+const ACCESS_KEY = `NYBFJtaT_RoW2_1AK1s-PHUz15VPsDdDFtpazbBjIE0`;
+
 const App = () => {
-  const [images, setImages] = useState([]);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [images, setImages] = useState([]); // Стан для зберігання списку зображень
+  const [page, setPage] = useState(1); // Стан для зберігання поточної сторінки результатів
+  const [loading, setLoading] = useState(false); // Стан для відображення завантаження
+  const [error, setError] = useState(false); // Стан для відображення помилки
+  const [selectedImage, setSelectedImage] = useState(null); // Стан для зберігання вибраного зображення
+  const [searchQuery, setSearchQuery] = useState(""); // Стан для зберігання поточного пошукового запиту
+  const [isSearching, setIsSearching] = useState(false); // Стан для відображення процесу пошуку нових зображень
 
   useEffect(() => {
-    if (searchQuery !== "") {
-      fetchImages(searchQuery, page);
+    Modal.setAppElement("#root");
+  }, []);
+
+ useEffect(() => {
+   const fetchData = async () => {
+     try {
+       setIsSearching(true);
+       setLoading(true);
+       setError(null);
+
+       if (searchQuery.trim() === "") {
+         toast.error("The search field cannot be empty!");
+         return;
+       }
+
+       const params = {
+         query: searchQuery,
+         page: page,
+         per_page: 10,
+         client_id: ACCESS_KEY,
+       };
+
+       const response = await axios.get(
+         `search/photos/?${new URLSearchParams(params).toString()}`
+       );
+
+       const { data } = response;
+
+       if (data.total === 0) {
+         toast.error(
+           "Sorry, we have not found the photos for your request. Try to write it differently.",
+           { duration: 5000 }
+         );
+         return;
+       }
+
+       setImages((prevImages) =>
+         page === 1 ? data.results : [...prevImages, ...data.results]
+       );
+       toast.success(`Wow! We found ${data.total} pictures`);
+     } catch (error) {
+       setError(error);
+     } finally {
+       setLoading(false);
+       setIsSearching(false);
+     }
+   };
+
+   fetchData();
+ }, [searchQuery, page]);
+
+ const handleSubmit = (search) => {
+   if (!search.trim()) {
+     
+     toast.error("The search field cannot be empty!");
+   } else {
+     setPage(1);
+     setSearchQuery(search);
+   }
+ };
+
+ const handleLoadMore = () => {
+   setPage((prevPage) => prevPage + 1);
+ };
+
+ const openModal = (image) => {
+    if (image) {
+      setSelectedImage(image);
     }
-  }, [searchQuery, page]);
-
-  const fetchImages = async (query, page) => {
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `https://api.unsplash.com/search/photos`,
-        {
-          params: {
-            query: query,
-            page: page,
-            per_page: 10, 
-            client_id: "NYBFJtaT_RoW2_1AK1s-PHUz15VPsDdDFtpazbBjIE0", 
-          },
-        }
-      );
-      const data = response.data;
-      if (page === 1) {
-        setImages(data.results);
-      } else {
-        setImages((prevImages) => [...prevImages, ...data.results]);
-      }
-    } catch (error) {
-      setError(error.message);
-    }
-    setLoading(false);
-  };
-
-  // const handleSubmit = (values, { resetForm }) => {
-  //   setPage(1);
-  //   setSearchQuery(values.search);
-  //   resetForm();
-  // };
-
-  const handleSubmit = (search) => {
-    setPage(1);
-    setSearchQuery(search);
-  };
-
-  const handleLoadMore = () => {
-    setPage((prevPage) => prevPage + 1);
-  };
-
-  const openModal = (image) => {
-    setSelectedImage(image);
-  };
+   
+ };
 
   const closeModal = () => {
-    setSelectedImage(null);
+    if (selectedImage) {
+      setSelectedImage(null);
+    }
   };
 
+  // Повертаємо JSX з компонентами
   return (
     <div className="app">
-      
-      <SearchBar onSubmit={handleSubmit} />
+      <SearchBar onSubmit={handleSubmit} />{" "}
+      {/* Передаємо функцію handleSubmit у компонент SearchBar */}
       <Toaster
         position="top-right"
         reverseOrder={false}
@@ -87,14 +114,15 @@ const App = () => {
           className: css.toastTextCenter,
         }}
       />
-      {loading && <Loader />}
-      {error && <ErrorMessage message={error} />}
+      {loading && <Loader />} {/* Відображаємо Loader при завантаженні */}
+      {error && <ErrorMessage message={error} />}{" "}
+      {/* Відображаємо ErrorMessage при помилці */}
       <ImageGallery images={images} openModal={openModal} />
       <LoadMoreBtn
-        onLoadMore={handleLoadMore}
-        hasMore={!loading && images.length > 0}
+        onLoadMore={handleLoadMore} // Передаємо функцію handleLoadMore у компонент LoadMoreBtn
+        hasMore={!loading && images.length > 0 && !isSearching} // Перевірка чи є ще зображення для завантаження
       />
-      {selectedImage && (
+      {selectedImage !== null && (
         <ImageModal
           isOpen={true}
           image={selectedImage}
@@ -104,5 +132,6 @@ const App = () => {
     </div>
   );
 };
+
 
 export default App;
